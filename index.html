@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarketMind - AI Chat Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #7e22ce 0%, #9333ea 100%);
+        }
+        
+        .chat-container {
+            height: calc(100vh - 160px);
+        }
+        
+        .message-bubble {
+            max-width: 80%;
+            border-radius: 18px;
+            position: relative;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+        
+        .user-bubble {
+            background-color: #9333ea;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bot-bubble {
+            background-color: #f3e8ff;
+            color: #4c1d95;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #9333ea;
+            margin-right: 4px;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .auth-container {
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Login Screen (shown by default) -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="auth-container bg-white rounded-xl overflow-hidden slide-in">
+            <div class="gradient-bg p-6 text-center">
+                <i class="fas fa-brain text-white text-5xl mb-4"></i>
+                <h1 class="text-3xl font-bold text-white">MarketMind</h1>
+                <p class="text-purple-100 mt-2">Your AI-powered market research assistant</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <label for="loginEmail" class="block text-gray-700 text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="loginEmail" class="input-field w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition" placeholder="your@email.com">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="loginPassword" class="block text-gray-700 text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="loginPassword" class="input-field w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition" placeholder="••••••••">
+                </div>
+                
+                <button id="loginBtn" class="w-full gradient-bg text-white font-medium py-3 px-4 rounded-lg hover:opacity-90 transition flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Login
+                </button>
+                
+                <div class="text-center mt-4">
+                    <p class="text-gray-500 text-sm">Don't have an account? <a href="#" id="showRegister" class="text-purple-600 font-medium hover:underline">Register</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Register Screen (hidden by default) -->
+    <div id="registerScreen" class="min-h-screen flex items-center justify-center p-4 hidden">
+        <div class="auth-container bg-white rounded-xl overflow-hidden slide-in">
+            <div class="gradient-bg p-6 text-center">
+                <i class="fas fa-user-plus text-white text-5xl mb-4"></i>
+                <h1 class="text-3xl font-bold text-white">Create Account</h1>
+                <p class="text-purple-100 mt-2">Join MarketMind today</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-4">
+                    <label for="registerName" class="block text-gray-700 text-sm font-medium mb-2">Full Name</label>
+                    <input type="text" id="registerName" class="input-field w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition" placeholder="John Doe">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="registerEmail" class="block text-gray-700 text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="registerEmail" class="input-field w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition" placeholder="your@email.com">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="registerPassword" class="block text-gray-700 text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="registerPassword" class="input-field w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition" placeholder="••••••••">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="registerConfirmPassword" class="block text-gray-700 text-sm font-medium mb-2">Confirm Password</label>
+                    <input type="password" id="registerConfirmPassword" class="input-field w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition" placeholder="••••••••">
+                </div>
+                
+                <button id="registerBtn" class="w-full gradient-bg text-white font-medium py-3 px-4 rounded-lg hover:opacity-90 transition flex items-center justify-center">
+                    <i class="fas fa-user-plus mr-2"></i> Register
+                </button>
+                
+                <div class="text-center mt-4">
+                    <p class="text-gray-500 text-sm">Already have an account? <a href="#" id="showLogin" class="text-purple-600 font-medium hover:underline">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Chat Interface (hidden by default) -->
+    <div id="chatInterface" class="hidden">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-brain text-2xl"></i>
+                    <h1 class="text-xl font-bold">MarketMind</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="newChatBtn" class="flex items-center space-x-1 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full transition">
+                        <i class="fas fa-plus text-sm"></i>
+                        <span class="text-sm">New Chat</span>
+                    </button>
+                    
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 focus:outline-none">
+                            <div class="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-purple-800 font-medium">
+                                <span id="userInitial">U</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-800">
+                                <i class="fas fa-user mr-2"></i> Profile
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-800">
+                                <i class="fas fa-cog mr-2"></i> Settings
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="#" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-800">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-4">
+            <!-- Chat History Sidebar (hidden on mobile) -->
+            <div class="hidden md:block fixed left-0 top-0 h-full w-64 bg-white shadow-md pt-20">
+                <div class="p-4">
+                    <h2 class="font-medium text-gray-700 mb-3 flex items-center">
+                        <i class="fas fa-history mr-2 text-purple-600"></i> Chat History
+                    </h2>
+                    
+                    <div class="space-y-2 max-h-[calc(100vh-180px)] overflow-y-auto">
+                        <a href="#" class="block p-2 rounded hover:bg-purple-50 text-sm text-gray-700 truncate">
+                            <i class="fas fa-comment-alt mr-2 text-purple-500"></i> Market trends analysis
+                        </a>
+                        <a href="#" class="block p-2 rounded hover:bg-purple-50 text-sm text-gray-700 truncate">
+                            <i class="fas fa-comment-alt mr-2 text-purple-500"></i> Competitor research
+                        </a>
+                        <a href="#" class="block p-2 rounded hover:bg-purple-50 text-sm text-gray-700 truncate">
+                            <i class="fas fa-comment-alt mr-2 text-purple-500"></i> Customer segmentation
+                        </a>
+                        <a href="#" class="block p-2 rounded hover:bg-purple-50 text-sm text-gray-700 truncate">
+                            <i class="fas fa-comment-alt mr-2 text-purple-500"></i> Pricing strategy
+                        </a>
+                        <a href="#" class="block p-2 rounded hover:bg-purple-50 text-sm text-gray-700 truncate">
+                            <i class="fas fa-comment-alt mr-2 text-purple-500"></i> SWOT analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Area -->
+            <div class="md:ml-64">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <!-- Chat Messages Container -->
+                    <div id="chatMessages" class="chat-container overflow-y-auto p-4 space-y-4">
+                        <!-- Welcome Message -->
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-800">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div class="bot-bubble message-bubble">
+                                <p>Hello! I'm MarketMind, your AI-powered market research assistant. How can I help you today?</p>
+                                <p class="text-xs text-purple-400 mt-2">Here are some suggestions:</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                                    <button class="suggestion-btn px-3 py-1.5 text-xs rounded-full border border-purple-200 text-purple-700 hover:bg-purple-50 transition">
+                                        Analyze current market trends
+                                    </button>
+                                    <button class="suggestion-btn px-3 py-1.5 text-xs rounded-full border border-purple-200 text-purple-700 hover:bg-purple-50 transition">
+                                        Compare competitors
+                                    </button>
+                                    <button class="suggestion-btn px-3 py-1.5 text-xs rounded-full border border-purple-200 text-purple-700 hover:bg-purple-50 transition">
+                                        Customer demographics
+                                    </button>
+                                    <button class="suggestion-btn px-3 py-1.5 text-xs rounded-full border border-purple-200 text-purple-700 hover:bg-purple-50 transition">
+                                        Pricing strategy advice
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Example User Message -->
+                        <div class="flex items-start justify-end space-x-3">
+                            <div class="user-bubble message-bubble">
+                                Can you analyze the current trends in the electric vehicle market?
+                            </div>
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Example Bot Response -->
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-800">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div class="bot-bubble message-bubble">
+                                <p>The electric vehicle (EV) market is experiencing rapid growth with several key trends:</p>
+                                <ul class="list-disc pl-5 mt-2 space-y-1">
+                                    <li><strong>Global sales growth:</strong> EV sales increased by 60% in 2022, reaching 10 million units worldwide</li>
+                                    <li><strong>Battery technology:</strong> Solid-state batteries are emerging with potential for higher energy density</li>
+                                    <li><strong>Charging infrastructure:</strong> Expansion of fast-charging networks is accelerating adoption</li>
+                                    <li><strong>Government policies:</strong> Many countries are setting 2030-2035 targets for phasing out ICE vehicles</li>
+                                </ul>
+                                <p class="mt-2">Would you like me to focus on any specific region or aspect of the EV market?</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="border-t border-gray-200 p-4 bg-gray-50">
+                        <form id="chatForm" class="flex items-end space-x-3">
+                            <div class="flex-grow relative">
+                                <textarea id="messageInput" rows="1" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none transition resize-none" placeholder="Ask MarketMind anything about market research..."></textarea>
+                                <div class="absolute right-3 bottom-3 flex space-x-2">
+                                    <button type="button" class="text-gray-400 hover:text-purple-600 transition">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                    <button type="button" class="text-gray-400 hover:text-purple-600 transition">
+                                        <i class="fas fa-microphone"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="submit" class="gradient-bg text-white p-3 rounded-lg hover:opacity-90 transition">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                        
+                        <p class="text-xs text-gray-500 mt-2 text-center">MarketMind may produce inaccurate information. Verify critical data.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const registerScreen = document.getElementById('registerScreen');
+        const chatInterface = document.getElementById('chatInterface');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        // Toggle between login and register screens
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginScreen.classList.add('hidden');
+            registerScreen.classList.remove('hidden');
+        });
+        
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+        });
+        
+        // Login functionality
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (email && password) {
+                // In a real app, you would validate credentials here
+                loginScreen.classList.add('hidden');
+                chatInterface.classList.remove('hidden');
+                
+                // Set user initial
+                const userInitial = document.getElementById('userInitial');
+                if (email.includes('@')) {
+                    userInitial.textContent = email.charAt(0).toUpperCase();
+                }
+            } else {
+                alert('Please enter both email and password');
+            }
+        });
+        
+        // Register functionality
+        registerBtn.addEventListener('click', () => {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            if (!name || !email || !password || !confirmPassword) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            // In a real app, you would register the user here
+            alert(`Account created for ${name}! You can now login.`);
+            registerScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('registerName').value = '';
+            document.getElementById('registerEmail').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('registerConfirmPassword').value = '';
+        });
+        
+        // Logout functionality
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            chatInterface.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            
+            // Clear login form
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        });
+        
+        // Toggle user menu
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+        
+        // Close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenu.contains(e.target) && e.target !== userMenuBtn) {
+                userMenu.classList.add('hidden');
+            }
+        });
+        
+        // New chat button
+        newChatBtn.addEventListener('click', () => {
+            // Clear chat messages except the first welcome message
+            const welcomeMessage = chatMessages.children[0];
+            chatMessages.innerHTML = '';
+            chatMessages.appendChild(welcomeMessage);
+            
+            // Add a "new chat started" message
+            addBotMessage("I've started a new chat session. How can I assist you with your market research today?");
+        });
+        
+        // Chat form submission
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                // Add user message
+                addUserMessage(message);
+                
+                // Clear input
+                messageInput.value = '';
+                
+                // Show typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'flex items-start space-x-3';
+                typingIndicator.innerHTML = `
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-800">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="bot-bubble message-bubble typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+                chatMessages.appendChild(typingIndicator);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Simulate bot response after a delay
+                setTimeout(() => {
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingIndicator);
+                    
+                    // Add bot response
+                    const responses = [
+                        "I've analyzed your query about market trends. The current data shows a 12% growth in Q2 compared to last year, with particular strength in the technology and healthcare sectors.",
+                        "Based on my research, there are three emerging patterns in consumer behavior that might interest you: 1) Increased preference for sustainable products, 2) Higher engagement with mobile commerce, and 3) Growing demand for personalized experiences.",
+                        "That's an insightful question. The competitive landscape has shifted recently with two new entrants capturing 8% market share combined. I recommend focusing on differentiation through customer service improvements.",
+                        "My analysis suggests the market is approaching saturation in urban areas, but there's significant untapped potential in suburban and rural markets where penetration is below 40%.",
+                        "According to the latest reports, the market size is projected to reach $85 billion by 2025, growing at a CAGR of 7.2%. The key drivers are technological innovation and changing consumer preferences."
+                    ];
+                    
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addBotMessage(randomResponse);
+                }, 1500 + Math.random() * 2000);
+            }
+        });
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Add user message to chat
+        function addUserMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'flex items-start justify-end space-x-3';
+            messageElement.innerHTML = `
+                <div class="user-bubble message-bubble">
+                    ${message}
+                </div>
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                    <i class="fas fa-user"></i>
+                </div>
+            `;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Add bot message to chat
+        function addBotMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'flex items-start space-x-3';
+            messageElement.innerHTML = `
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-800">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="bot-bubble message-bubble">
+                    ${message}
+                </div>
+            `;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Add click handlers for suggestion buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('suggestion-btn')) {
+                e.preventDefault();
+                messageInput.value = e.target.textContent.trim();
+                messageInput.focus();
+            }
+        });
+
+        // API Communication
+async function sendMessage(message, history = []) {
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                history: history
+            })
+        });
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error:', error);
+        return { error: "Failed to communicate with server" };
+    }
+}
+
+// Modify your chat form submission to use the API
+chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    
+    if (message) {
+        // Add user message
+        addUserMessage(message);
+        messageInput.value = '';
+        
+        // Show typing indicator
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'flex items-start space-x-3';
+        typingIndicator.innerHTML = `
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-800">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="bot-bubble message-bubble typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        chatMessages.appendChild(typingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Get response from API
+        const chatHistory = Array.from(chatMessages.children).map(el => {
+            if (el.querySelector('.user-bubble')) {
+                return [el.querySelector('.user-bubble').textContent, null];
+            }
+            if (el.querySelector('.bot-bubble') && !el.querySelector('.typing-indicator')) {
+                return [null, el.querySelector('.bot-bubble').textContent];
+            }
+            return null;
+        }).filter(Boolean);
+        
+        const response = await sendMessage(message, chatHistory);
+        
+        // Remove typing indicator
+        chatMessages.removeChild(typingIndicator);
+        
+        if (response.error) {
+            addBotMessage(`Error: ${response.error}`);
+        } else {
+            addBotMessage(response.response);
+            
+            // Handle audio if available
+            if (response.audio) {
+                const audio = new Audio(`data:audio/mp3;base64,${response.audio}`);
+                audio.play();
+            }
+        }
+    }
+});
+
+// Handle file uploads
+const fileInput = document.createElement('input');
+fileInput.type = 'file';
+fileInput.accept = '.csv,.xlsx,.png,.jpg,.jpeg,.gif';
+fileInput.style.display = 'none';
+
+document.body.appendChild(fileInput);
+
+// Add click handler for paperclip icon to trigger file input
+document.querySelector('.fa-paperclip').parentElement.addEventListener('click', () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', async (e) => {
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Show uploading indicator
+        const uploadingIndicator = document.createElement('div');
+        uploadingIndicator.className = 'flex items-start space-x-3';
+        uploadingIndicator.innerHTML = `
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-800">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="bot-bubble message-bubble">
+                Uploading ${file.name}...
+            </div>
+        `;
+        chatMessages.appendChild(uploadingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            chatMessages.removeChild(uploadingIndicator);
+            
+            if (result.error) {
+                addBotMessage(`Error: ${result.error}`);
+            } else {
+                addBotMessage(result.response);
+            }
+        } catch (error) {
+            chatMessages.removeChild(uploadingIndicator);
+            addBotMessage(`Upload failed: ${error.message}`);
+        }
+    }
+});
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=rayen-toujani/spaceee" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
