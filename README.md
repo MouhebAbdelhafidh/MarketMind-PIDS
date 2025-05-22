@@ -34,6 +34,7 @@ cd MarketMind-PIDS
 pip install -r requirements.txt
 python app.py
 ```
+```bash
 📂 Repository Structure
 📦 MarketMind-PIDS/
 ├── app.py                  # Gradio interface
@@ -44,7 +45,7 @@ python app.py
 ├── assets/                 # Example media files
 ├── README.md               # This file
 └── requirements.txt
-
+```
 🤝 Contributing
 Contributions are welcome! To request access to contribute to the Hugging Face Space, contact the project maintainer or open an issue.
 
